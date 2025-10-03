@@ -1,0 +1,112 @@
+<div class="ors-topbar" (document:click)="onDocClick($event)">
+  <div class="search-box">
+    <button class="menu" (click)="sidebarOpen = !sidebarOpen" title="Toggle menu">☰</button>
+
+    <input
+      placeholder="Find a place (Nominatim)"
+      [(ngModel)]="searchQuery"
+      (input)="onSearchInput(searchQuery)"
+      (keydown)="onSearchKeydown($event)"
+    />
+
+    <button class="search" (click)="triggerSearch()" title="Search">🔍</button>
+    <button class="locate" (click)="locateMe(true)" title="Use my location">📍</button>
+  </div>
+
+  @if (searchResults.length) {
+    <div class="search-results">
+      @for (r of searchResults; track r.place_id; let i = $index) {
+        <button
+          class="result-item"
+          [class.active]="i === highlightIndex"
+          (click)="goToSearchResult(r)"
+        >
+          {{ r.display_name }}
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<aside class="ors-sidebar" [class.collapsed]="sidebarOpen">
+  <header class="sidebar-header">
+    <span class="logo">openroute <b>service</b></span>
+    <button class="icon-btn" (click)="sidebarOpen=false" title="Close">✖</button>
+  </header>
+
+  <div class="profiles">
+    <button (click)="isoProfile='cycling-regular'" [class.active]="isoProfile==='cycling-regular'">🚴</button>
+    <button (click)="isoProfile='foot-walking'" [class.active]="isoProfile==='foot-walking'">🚶</button>
+    <button (click)="isoProfile='driving-car'" [class.active]="isoProfile==='driving-car'">🚗</button>
+    <span class="profile-badge">Profile: <b>{{ labelProfile(isoProfile) }}</b></span>
+  </div>
+
+  <section class="params">
+    <div class="row">
+      <label>Isochrone method</label>
+      <div class="select-like">
+        <select [(ngModel)]="isoMethod">
+          <option value="distance">Distance</option>
+          <option value="time">Time</option>
+        </select>
+        <button class="clear" (click)="isoMethod='distance'" title="Reset">✕</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Range (1 - 120)</label>
+      <div class="slider-row">
+        <input type="range" [min]="1" [max]="120" [step]="1" [(ngModel)]="isoRange">
+        <div class="num-box">
+          <input type="number" [min]="1" [max]="120" [step]="1" [(ngModel)]="isoRange">
+          <span class="unit">{{ isoMethod==='distance' ? 'km(s)' : 'min(s)' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Interval (1 - 60)</label>
+      <div class="slider-row">
+        <input type="range" [min]="1" [max]="60" [step]="1" [(ngModel)]="isoInterval">
+        <div class="num-box">
+          <input type="number" [min]="1" [max]="60" [step]="1" [(ngModel)]="isoInterval">
+          <span class="unit">{{ isoMethod==='distance' ? 'km(s)' : 'min(s)' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <small>Tip: choose <b>GPS</b> or <b>Zone</b>, then generate isochrones and/or load POIs.</small>
+    </div>
+
+    <div class="action-row">
+      <button class="primary" (click)="drawIsochrones()">Generate isochrones</button>
+      <button class="ghost" (click)="clearIsochrones()">Clear</button>
+    </div>
+  </section>
+
+  <section class="modes">
+    <div class="segmented">
+      <button [class.active]="mode==='gps'" (click)="setModeGPS()">📍 GPS</button>
+      <button [class.active]="mode==='zone'" (click)="setModeZone()">🗺️ Zone</button>
+    </div>
+
+    @if (mode==='gps') {
+      <div class="gps-opts">
+        <label>Search radius: <b>{{ bufferMeters }}</b> m</label>
+        <input type="range" min="100" max="2000" step="50" [(ngModel)]="bufferMeters">
+      </div>
+    }
+
+    <div class="action-row">
+      <button class="secondary" (click)="loadPois()">🏨 Load POIs</button>
+      <button class="ghost" (click)="clearPois()">Clear POIs</button>
+    </div>
+  </section>
+</aside>
+
+<div id="map"></div>
+
+@if (error) {
+  <div class="toast error">{{ error }}</div>
+}

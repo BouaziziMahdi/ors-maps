@@ -1,0 +1,9 @@
+{
+  "/ors-api": {
+    "target": "https://api.openrouteservice.org",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": { "^/ors-api": "" }
+  }
+}
